@@ -28,7 +28,7 @@ class StorageService:
         'title': result['metadatas'][i]['title'],
       })
 
-  return articles
+    return articles
 
   def update_article_analysis(self, article_id, summary, topic):
     existing = self.collection.get(ids=[article_id])
