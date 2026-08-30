@@ -65,27 +65,5 @@ h1{font-size:46px;line-height:1.02;letter-spacing:-.055em;margin:10px 0 13px}.he
 <div class="footer"><span>SignalDesk · AI News Intelligence</span><span>Fetch on demand · RAG · Open-source LLM</span></div>
 </div>
 <div class="toast" id="toast"></div>
-
-<script>
-let fetched=false;
-function notify(t){let x=document.getElementById('toast');x.textContent=t;x.classList.add('show');setTimeout(()=>x.classList.remove('show'),2200)}
-function fetchNews(){
- if(fetched)return;
- const b=document.getElementById('fetchBtn');b.classList.add('loading');b.textContent='Fetching top 5 stories…';document.getElementById('newsStatus').textContent='Fetching…';
- setTimeout(()=>{document.getElementById('empty').style.display='none';document.getElementById('news').style.display='flex';b.classList.remove('loading');b.textContent='Refresh Top 5 ↗';document.getElementById('newsStatus').textContent='5 stories ready';fetched=true;notify('5 stories fetched and summarized')},900);
-}
-function mode(el,name){document.querySelectorAll('.route button').forEach(b=>b.classList.remove('active'));el.classList.add('active');document.getElementById('routeText').textContent=name}
-function ask(q){document.getElementById('input').value=q;document.getElementById('input').focus()}
-function route(q){let s=q.toLowerCase();return /news|today|story|stories|latest|openai|nvidia|trend/.test(s)?'News RAG':/domain|specialized|fine.?tun/.test(s)?'Domain':'General LLM'}
-function send(){
- const input=document.getElementById('input'),q=input.value.trim();if(!q)return;
- const r=route(q),chat=document.getElementById('chat');
- chat.insertAdjacentHTML('beforeend',`<div class="msg user">${esc(q)}</div>`);
- if(r==='News RAG'&&!fetched){chat.insertAdjacentHTML('beforeend',`<div class="msg ai">I need the latest news context first. Click <b>Fetch Today's Top 5</b>, then ask me again.<div class="cite">No news API call is made automatically.</div></div>`);input.value='';chat.scrollTop=chat.scrollHeight;return}
- document.getElementById('routeText').textContent=r;input.value='';chat.scrollTop=chat.scrollHeight;
- setTimeout(()=>{let t=r==='News RAG'?'Using the five retrieved stories, I would answer this with grounded context and source citations.':r==='Domain'?'This would be routed to the fine-tuned domain model.':'This would go directly to the base open-source LLM.';chat.insertAdjacentHTML('beforeend',`<div class="msg ai">${t}<div class="cite">${r} · backend placeholder</div></div>`);chat.scrollTop=chat.scrollHeight},350)
-}
-function esc(s){return s.replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m])}
-</script>
 </body>
 </html>
