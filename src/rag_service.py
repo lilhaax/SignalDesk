@@ -1,22 +1,25 @@
-# import required libraries
+from langchain.chat_models import init_chat_model
+import asyncio
 
-from transformers import pipeline
-
-# rag service class --> prompt / RAG or GENERAL GENERATION
+"""rag service class --> prompt / RAG or GENERAL GENERATION"""
 
 class RAGService:
-  def __init__(self, storage_service):
+  def __init__(self, storage_service, api_key):
     self.storage_service = storage_service
-    self.llm = pipeline('text2text-generation', model='google/flan-t5-large')
+    self.llm = init_chat_model(
+      model='gpt-oss:20b-cloud',
+      api_key=api_key,
+      base_url='https://ollama.com/v1',
+    )
 
-  def classify_intent(self, user_query):
+  def _classify_intent(self, user_query):
     prompt = f"Determine if this query needs news database search or general knowledge. Answer only 'NEWS' or 'GENERAL'. Query: {user_query}"
-    result = self.llm(prompt, max_length=10)
-    intent = result[0]['generated_text'].strip().upper()
+    result = self.llm.invoke(prompt)
+    intent = result.content
     return "NEWS" if 'NEWS' in intent else 'GENERAL'
 
-  def generate_response(self, user_query):
-    intent = self.classify_intent(user_query)
+  def _generate_response(self, user_query):
+    intent = self._classify_intent(user_query)
 
     if intent == 'NEWS':
       docs = self.storage_service.collection.query(query_texts=[user_query], n_results = 2)
@@ -25,5 +28,11 @@ class RAGService:
     else:
       prompt = f"Answer this query directly:\n{user_query}"
 
-    result = self.llm(prompt, max_length=200)
-    return result[0]['generated_text'].strip()
+    result = self.llm.invoke(prompt)
+    return result.content 
+  
+  async def classify_intent(self, user_query):
+    return await asyncio.to_thread(self._classify_intent, user_query)
+  
+  async def generate_response(self, user_query):
+    return await asyncio.to_thread(self._generate_response, user_query)

@@ -22,10 +22,13 @@ class StorageService:
     articles = []
 
     for i in range(min(limit, len(result['ids']))):
+      meta = result['metadatas'][i] if result['metadatas'] else {}
       articles.append({
         'id': result['ids'][i],
         'content': result['documents'][i],
-        'title': result['metadatas'][i]['title'],
+        'title': meta.get('title', ''),
+        'summary': meta.get('summary', ''),
+        'topic': meta.get('topic', ''),
       })
 
     return articles
@@ -33,7 +36,7 @@ class StorageService:
   def update_article_analysis(self, article_id, summary, topic):
     existing = self.collection.get(ids=[article_id])
     if existing['ids']:
-      metadata = existing['metadatas'][0]
+      metadata = existing['metadatas'][0] if existing['metadatas'] else {}
       metadata['summary'] = summary
       metadata['topic'] = topic
       self.collection.update(ids=[article_id], metadatas=[metadata])

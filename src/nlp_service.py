@@ -1,20 +1,48 @@
-#!pip install "numpy==2.2.6" "transformers==4.57.1" "sentencepiece"
-from transformers import pipeline
+from langchain.chat_models import init_chat_model
+from langchain.agents import create_agent
+import asyncio
 
 """Nlp service class --> summarization and topic generation"""
 
 class NLPService:
-  def __init__(self):
-    self.summarizer = pipeline('summarization', model='facebook/bart-large-cnn')
-    self.topic_generator = pipeline('text2text-generation', model='google/flan-t5-base')
+    def __init__(self, api_key):
+        self.api_key = api_key
+        self.llm = init_chat_model(
+            model="gpt-oss:20b-cloud",
+            api_key=api_key,
+            base_url="https://ollama.com/v1",
+        )
 
-  def summarize_text(self, text):
-    truncated_text = text[:1024]
-    summary = self.summarizer(truncated_text, max_length=250, min_length=120, do_sample=False)
-    return summary[0]['summary_text']
+        self.summarizer_agent = create_agent(
+            model=self.llm,
+            system_prompt="Summarize the article accurately and concisely. Use only information from the article. Do not add opinions, assumptions, or facts. Write in clear, neutral English."
+        )
 
-  def extract_topic(self, text):
-    truncated_text = text[:512]
-    prompt = f"Write a short, catchy title for this news article:\n\n{truncated_text}"
-    result = self.topic_generator(prompt, max_length=20, clean_up_tokenization_spaces=True)
-    return result[0]['generated_text'].strip()
+        self.topicgenerator_agent = create_agent(
+            model=self.llm,
+            system_prompt="Generate one short headline for this article. Keep it clear, professional, and under 5 words."
+        )
+
+    def _summarize_sync(self, text):
+        truncated_text = ' '.join(text.split()[:500])
+        result = self.summarizer_agent.invoke({
+            "messages": [
+                {"role": "user", "content": truncated_text}
+            ]
+        })
+        return result["messages"][-1].content
+
+    def _extract_topic_sync(self, text):
+        truncated_text = ' '.join(text.split()[:200])
+        result = self.topicgenerator_agent.invoke({
+            "messages": [
+                {"role": "user", "content": truncated_text}
+            ]
+        })
+        return result["messages"][-1].content
+    
+    async def summarize_text(self, text):
+        return await asyncio.to_thread(self._summarize_sync, text)
+    
+    async def extract_topic(self, text):
+        return await asyncio.to_thread(self._extract_topic_sync, text)
