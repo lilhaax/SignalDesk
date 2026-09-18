@@ -1,5 +1,3 @@
-"""controller class"""
-
 class NewsController:
   def __init__(self, news_service, storage_service, nlp_service=None, rag_service=None):
     self.news_service = news_service
@@ -13,7 +11,7 @@ class NewsController:
       self.storage_service.save_articles(articles)
     return articles
 
-  async def process_article_insights(self, limit=10):
+  async def process_article_insights(self, limit=3):
     if not self.nlp_service:
       return []
 

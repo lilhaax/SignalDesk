@@ -3,13 +3,14 @@ import httpx
 class NewsService:
   def __init__(self, api_key):
     self.api_key = api_key
-    self.base_url = "https://newsdata.io/api/1/news"
+    self.base_url = "https://api.thenewsapi.com/v1/news/top"
 
   async def fetch_news(self, query='technology'):
     params = {
-      'apikey':self.api_key,
-      'q':query,
-      'language':'en'
+      'api_token':self.api_key,
+      'search':query,
+      'language':'en',
+      'limit':3
     }
 
     async with httpx.AsyncClient() as client:
@@ -19,11 +20,11 @@ class NewsService:
 
     articles = []
 
-    for article in data.get('results', [])[:10]:
-      if article.get('content'):
+    for article in data.get('data', [])[:3]:
+      if article.get('description'):
         articles.append({
-            'id':article.get('article_id'),
+            'id':article.get('uuid'),
             'title':article.get('title'),
-            'content':article.get('content'),
+            'content':article.get('description'),
         })
     return articles

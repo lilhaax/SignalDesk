@@ -11,13 +11,12 @@ class StorageService:
     ids = [article['id'] for article in articles]
     documents = [article['content'] for article in articles]
     metadatas = [{'title': article['title']} for article in articles]
-
     self.collection.upsert(ids=ids, documents=documents, metadatas=metadatas)
 
   def get_all_articles(self):
     return self.collection.get()
 
-  def get_articles(self, limit=5):
+  def get_articles(self, limit=3):
     result = self.collection.get()
     articles = []
 
@@ -30,7 +29,6 @@ class StorageService:
         'summary': meta.get('summary', ''),
         'topic': meta.get('topic', ''),
       })
-
     return articles
 
   def update_article_analysis(self, article_id, summary, topic):
